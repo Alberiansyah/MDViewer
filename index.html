@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MDView — Markdown workspace</title>
+<meta name="description" content="A small, offline-friendly Markdown workspace with live preview, outline, diagrams and HTML export.">
+<meta name="theme-color" content="#f3efe8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23c2410c'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='17' font-weight='700' fill='%23fff7f2' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css">
+<link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" media="not all">
+<link rel="stylesheet" href="styles.css">
+
+<script>
+  // Apply the saved (or preferred) theme before the first paint to avoid a flash.
+  (function () {
+    try {
+      var t = localStorage.getItem('mdview.theme');
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+      var l = document.getElementById('hljs-light');
+      var d = document.getElementById('hljs-dark');
+      if (l) l.media = t === 'dark' ? 'not all' : 'all';
+      if (d) d.media = t === 'dark' ? 'all' : 'not all';
+    } catch (e) { /* ignore */ }
+  })();
+</script>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <header class="toolbar">
+    <div class="brand" title="MDView">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3h7.5L18 7.5V21H6z"/><path d="M13.5 3v4.5H18"/><path d="M9 12.5h6M9 15.5h6M9 9.5h2"/>
+        </svg>
+      </span>
+      <span class="brand-name">MD<span>View</span></span>
+    </div>
+
+    <div class="file-chip" id="fileChip" title="Current document">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 3h7.5L18 7.5V21H6z"/><path d="M13.5 3v4.5H18"/>
+      </svg>
+      <span id="fileName">sample.md</span>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <div class="segmented" id="viewToggle" role="group" aria-label="Which pane to show">
+      <button type="button" data-view="editor" class="is-active" aria-pressed="true">Editor</button>
+      <button type="button" data-view="preview" aria-pressed="false">Preview</button>
+    </div>
+
+    <div class="tool-actions">
+      <button class="btn" id="openBtn" type="button" title="Open a Markdown file (Ctrl+O)" aria-label="Open file">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 7a2 2 0 0 1 2-2h3.6a2 2 0 0 1 1.4.6L11.4 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <path d="M12 16.5V11m0 0-2.2 2.2M12 11l2.2 2.2"/>
+        </svg>
+        <span class="btn-text">Open</span>
+      </button>
+
+      <button class="btn" id="exportBtn" type="button" title="Export the preview as HTML (Ctrl+S)" aria-label="Export HTML">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3.5v11m0 0 4-4m-4 4-4-4"/><path d="M4 16.5v2.5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2.5"/>
+        </svg>
+        <span class="btn-text">Export</span>
+      </button>
+
+      <button class="btn btn-icon" id="tocBtn" type="button" title="Toggle outline (Ctrl+\)" aria-label="Toggle outline" aria-expanded="false" aria-controls="toc">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12"/>
+          <circle cx="4" cy="6.5" r="1.15" fill="currentColor" stroke="none"/>
+          <circle cx="4" cy="12" r="1.15" fill="currentColor" stroke="none"/>
+          <circle cx="4" cy="17.5" r="1.15" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+
+      <button class="btn btn-icon" id="themeBtn" type="button" title="Switch theme" aria-label="Switch theme" aria-pressed="false">
+        <svg class="ic ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.1"/><path d="M12 2.5v2.2M12 19.3v2.2M4.4 4.4l1.6 1.6M18 18l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.4 19.6 6 18M18 6l1.6-1.6"/>
+        </svg>
+        <svg class="ic ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.2 14.6A8.2 8.2 0 0 1 9.4 3.8a7.3 7.3 0 1 0 10.8 10.8z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="main" id="main" data-view="editor">
+    <div class="workspace" id="workspace">
+
+      <section class="pane editor-pane" id="editorPane" aria-label="Markdown editor">
+        <div class="pane-head">
+          <span class="pane-label">Markdown</span>
+          <span class="pane-meta" id="editorMeta">0 words</span>
+        </div>
+        <div class="editor-scroll">
+          <textarea id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"
+            aria-label="Markdown source"
+            placeholder="Start typing Markdown here…&#10;&#10;You can also drop a .md file anywhere on this window."></textarea>
+        </div>
+      </section>
+
+      <div class="divider" id="divider" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview" tabindex="0">
+        <span class="divider-grip" aria-hidden="true"></span>
+      </div>
+
+      <section class="pane preview-pane" id="previewPane" aria-label="Rendered preview">
+        <div class="pane-head">
+          <span class="pane-label">Preview</span>
+          <span class="pane-meta" id="previewMeta">—</span>
+        </div>
+        <div class="preview-scroll" id="previewScroll">
+          <div class="empty-state" id="emptyState" hidden>
+            <div class="empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3h7.5L18 7.5V21H6z"/><path d="M13.5 3v4.5H18"/><path d="M9 13h6M9 16h4"/>
+              </svg>
+            </div>
+            <h2>Nothing to preview yet</h2>
+            <p>Write some Markdown on the left, or open / drop a <code>.md</code> file to get started.</p>
+          </div>
+          <div class="render-error" id="renderError" hidden></div>
+          <article class="markdown-body" id="preview" aria-live="polite"></article>
+        </div>
+      </section>
+
+    </div>
+
+    <aside class="toc" id="toc" aria-label="Document outline">
+      <div class="toc-head">
+        <span class="pane-label">Outline</span>
+        <button class="btn btn-icon btn-ghost toc-close" id="tocClose" type="button" aria-label="Close outline">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M6 18 18 6"/>
+          </svg>
+        </button>
+      </div>
+      <nav class="toc-scroll">
+        <ul class="toc-list" id="tocList"></ul>
+      </nav>
+    </aside>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+
+<div class="drop-overlay" id="dropOverlay" hidden>
+  <div class="drop-card">
+    <div class="drop-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 16.5V4.5m0 0 4 4m-4-4-4 4"/><path d="M4 15.5v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+      </svg>
+    </div>
+    <p class="drop-title">Drop your file to open it</p>
+    <p class="drop-sub">.md, .markdown and .txt files are supported</p>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<input type="file" id="fileInput" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+
+<!-- Default document shown on first run. Kept inline so the app also works when
+     index.html is opened directly from disk (file:// blocks fetch of sample.md). -->
+<script type="text/plain" id="sample-fallback">
+# MDView — a calm place to write Markdown
+
+MDView renders your Markdown as you type. Write on the left, watch it take shape on the right, then export a clean, self-contained HTML file when you're done.
+
+> **Tip** — everything here is editable. Change a line and the preview updates almost immediately.
+
+---
+
+## Getting started
+
+1. Type Markdown in the left pane.
+2. Open an existing file with **Open**, or drop a `.md` file anywhere on the page.
+3. Export a standalone page with **Export**.
+
+The outline button in the toolbar (or `Ctrl` + `\`) opens a table of contents built from your headings.
+
+### Opening files
+
+You can drag files straight onto the window. Supported extensions are `.md`, `.markdown`, and `.txt`.
+
+### The live preview
+
+Rendering is debounced by about 150 ms, so the preview keeps up while you type without getting in the way.
+
+## Writing guide
+
+### Text formatting
+
+Use **bold**, *italic*, ~~strikethrough~~, and `inline code`. Links look like [this one](https://commonmark.org) and are rendered safely. A single newline stays part of the same paragraph; to start a new line, end a line with two spaces or leave a blank line between paragraphs.
+
+### Lists and tasks
+
+- A simple bullet
+- With a nested item
+  - and one more level
+- Back to the top level
+
+1. Ordered lists work
+2. And they keep their numbering
+3. Across several lines
+
+- [x] Write something
+- [x] Preview it
+- [ ] Export it
+
+### Tables
+
+| Feature | Status | Notes |
+| :--- | :---: | ---: |
+| Live preview | Ready | Debounced |
+| Syntax highlighting | Ready | highlight.js |
+| Diagrams | Ready | Mermaid |
+| Export | Ready | Standalone HTML |
+
+### Code
+
+```js
+// Fenced code blocks get a language label and a copy button.
+const greeting = (name) => `Hello, ${name}!`;
+
+export function render(items = []) {
+  return items
+    .filter(Boolean)
+    .map(greeting)
+    .join("\n");
+}
+```
+
+```bash
+# Shell snippets work too.
+npm install --global mdview
+mdview ./notes.md --open
+```
+
+Inline code sits in a chip, like `const total = price * qty`.
+
+### Diagrams
+
+```mermaid
+flowchart LR
+  A[Write Markdown] --> B{Looks right?}
+  B -- No --> C[Edit]
+  C --> A
+  B -- Yes --> D[Export HTML]
+  D --> E[Done]
+```
+
+Diagrams are drawn with Mermaid and re-render when you switch between the light and dark themes.
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| Ctrl / Cmd + O | Open a file |
+| Ctrl / Cmd + S | Export HTML |
+| Ctrl / Cmd + \\ | Toggle the outline |
+
+## Export
+
+Export writes a single HTML file with your rendered content, the theme colours currently in use, and any diagrams already drawn. There is no build step and nothing to install.
+</script>
+
+<script defer src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js" onerror="window.__cdnMarkedFailed=1"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/highlight.min.js" onerror="window.__cdnHljsFailed=1"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" onerror="window.__cdnMermaidFailed=1"></script>
+<script defer src="app.js"></script>
+</body>
+</html>
