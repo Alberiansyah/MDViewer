@@ -16,3 +16,7 @@ Thumbs.db
 dist/
 .cache/
 *.tmp
+
+# Deepwork session state
+.slim/deepwork/
+

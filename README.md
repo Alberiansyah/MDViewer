@@ -11,7 +11,8 @@ Write Markdown on the left, watch it render on the right, and export a clean, se
 - **Syntax highlighting** — fenced code blocks highlighted with [highlight.js](https://highlightjs.org/), including language labels and a one-click copy button.
 - **Mermaid diagrams** — ` ```mermaid ` blocks are drawn inline and re-render on theme change.
 - **Document outline** — an auto-generated, numbered table of contents with scroll-spy tracking.
-- **Light / dark themes** — respects the OS preference on first run, then remembers your choice. Mermaid diagrams re-theme too.
+- **Named themes** — eight palettes (Paper, Porcelain, Sepia, Sage, Ink, Midnight, Slate, Plum), four light and four dark. Respects the OS preference on first run, then remembers your choice per mode. Mermaid diagrams re-theme too.
+- **Font choices** — pick a reading-text, interface, and code/editor font from the Appearance panel. Choices persist and are baked into HTML exports.
 - **Open files** — via the toolbar, `Ctrl/Cmd+O`, or by dragging a `.md`, `.markdown`, or `.txt` file anywhere onto the page.
 - **Export to HTML** — produces a standalone, self-contained page with the current theme colors, no dependencies required.
 
@@ -62,7 +63,8 @@ Then visit <http://localhost:8080>.
 | `Ctrl` / `Cmd` + `O` | Open a file |
 | `Ctrl` / `Cmd` + `S` | Export HTML |
 | `Ctrl` / `Cmd` + `\` | Toggle the outline |
-| `Esc` | Close the outline or drop overlay |
+| `Ctrl` / `Cmd` + `Shift` + `L` | Switch light / dark mode |
+| `Esc` | Close the appearance panel, outline, or drop overlay |
 
 ### Supported files
 
@@ -88,7 +90,7 @@ editor input → debounce → marked.parse → preview HTML
              → highlight.js → mermaid → outline / scroll-spy
 ```
 
-All state that survives a refresh is stored in `localStorage` under `mdview.*` keys (content, theme, split ratio, outline state, view, file name). Raw HTML in documents is escaped and link/image URLs are sanitized, so untrusted Markdown can't inject markup or scripts into the page.
+All state that survives a refresh is stored in `localStorage` under `mdview.*` keys (content, theme and per-mode theme, fonts and font stacks, split ratio, outline state, view, file name). Raw HTML in documents is escaped and link/image URLs are sanitized, so untrusted Markdown can't inject markup or scripts into the page.
 
 ## Notes on security
 

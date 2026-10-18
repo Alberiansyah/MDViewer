@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="paper" data-mode="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -10,25 +10,54 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Sora:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 
 <link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css">
 <link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" media="not all">
 <link rel="stylesheet" href="styles.css">
 
 <script>
-  // Apply the saved (or preferred) theme before the first paint to avoid a flash.
+  // Apply the saved (or preferred) theme + fonts before the first paint to avoid
+  // a flash. The theme ids must mirror the token blocks in styles.css; the
+  // colour list here is only used for the pre-paint <meta theme-color> (app.js
+  // re-reads the computed value on boot, so drift is self-correcting).
   (function () {
-    try {
-      var t = localStorage.getItem('mdview.theme');
-      if (t !== 'light' && t !== 'dark') {
-        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      document.documentElement.setAttribute('data-theme', t);
+    var MODES = {
+      paper: 'light', porcelain: 'light', sepia: 'light', sage: 'light',
+      ink: 'dark', midnight: 'dark', slate: 'dark', plum: 'dark'
+    };
+    var PREPAINT_BG = {
+      paper: '#f3efe8', porcelain: '#f2f4f8', sepia: '#f2e7d3', sage: '#edf0e6',
+      ink: '#14120f', midnight: '#0d1424', slate: '#15181d', plum: '#1a1326'
+    };
+    function apply(id) {
+      var mode = MODES[id] || 'light';
+      var root = document.documentElement;
+      root.setAttribute('data-theme', id);
+      root.setAttribute('data-mode', mode);
       var l = document.getElementById('hljs-light');
       var d = document.getElementById('hljs-dark');
-      if (l) l.media = t === 'dark' ? 'not all' : 'all';
-      if (d) d.media = t === 'dark' ? 'all' : 'not all';
+      if (l) l.media = mode === 'dark' ? 'not all' : 'all';
+      if (d) d.media = mode === 'dark' ? 'all' : 'not all';
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta && PREPAINT_BG[id]) meta.setAttribute('content', PREPAINT_BG[id]);
+    }
+    try {
+      var saved = localStorage.getItem('mdview.theme');
+      // Migrate the old 'light'/'dark' values to the matching default theme.
+      if (saved === 'light') saved = 'paper';
+      else if (saved === 'dark') saved = 'ink';
+      if (!saved || !MODES[saved]) {
+        saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'ink' : 'paper';
+      }
+      apply(saved);
+      var stacks = localStorage.getItem('mdview.fontStacks');
+      if (stacks) {
+        stacks = JSON.parse(stacks);
+        ['body', 'ui', 'mono', 'display'].forEach(function (k) {
+          if (stacks[k]) document.documentElement.style.setProperty('--font-' + k, stacks[k]);
+        });
+      }
     } catch (e) { /* ignore */ }
   })();
 </script>
@@ -86,14 +115,63 @@
         </svg>
       </button>
 
-      <button class="btn btn-icon" id="themeBtn" type="button" title="Switch theme" aria-label="Switch theme" aria-pressed="false">
-        <svg class="ic ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="4.1"/><path d="M12 2.5v2.2M12 19.3v2.2M4.4 4.4l1.6 1.6M18 18l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.4 19.6 6 18M18 6l1.6-1.6"/>
-        </svg>
-        <svg class="ic ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20.2 14.6A8.2 8.2 0 0 1 9.4 3.8a7.3 7.3 0 1 0 10.8 10.8z"/>
-        </svg>
-      </button>
+      <div class="appearance" id="appearanceWrap">
+        <button class="btn btn-icon" id="themeBtn" type="button" title="Appearance — themes &amp; fonts (Ctrl+Shift+L toggles light/dark)" aria-label="Appearance settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="appearancePanel">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.2 0-1 .8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-3.6-4-6.8-9-6.8z"/>
+            <circle cx="7.6" cy="12.2" r="1.05" fill="currentColor" stroke="none"/>
+            <circle cx="10" cy="8.4" r="1.05" fill="currentColor" stroke="none"/>
+            <circle cx="14.4" cy="8.4" r="1.05" fill="currentColor" stroke="none"/>
+            <circle cx="7.9" cy="15.8" r="1.05" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+
+        <div class="appearance-panel" id="appearancePanel" role="dialog" aria-modal="false" aria-label="Appearance settings" hidden>
+          <div class="ap-head">
+            <span class="ap-title">Appearance</span>
+            <button class="btn btn-icon btn-ghost ap-close" id="appearanceClose" type="button" aria-label="Close appearance settings">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M6 18 18 6"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="ap-body">
+            <div class="ap-mode" id="apMode" role="group" aria-label="Colour mode">
+              <button type="button" data-mode-set="light" aria-pressed="true">Light</button>
+              <button type="button" data-mode-set="dark" aria-pressed="false">Dark</button>
+            </div>
+
+            <div class="ap-section">
+              <span class="ap-label" id="apLightLabel">Light themes</span>
+              <div class="ap-swatches" id="apLightSwatches" role="group" aria-labelledby="apLightLabel"></div>
+            </div>
+
+            <div class="ap-section">
+              <span class="ap-label" id="apDarkLabel">Dark themes</span>
+              <div class="ap-swatches" id="apDarkSwatches" role="group" aria-labelledby="apDarkLabel"></div>
+            </div>
+
+            <div class="ap-section">
+              <span class="ap-label">Fonts</span>
+              <label class="ap-field" for="fontBodyInput">
+                <span>Reading text</span>
+                <select id="fontBodyInput"></select>
+              </label>
+              <label class="ap-field" for="fontUiInput">
+                <span>Interface</span>
+                <select id="fontUiInput"></select>
+              </label>
+              <label class="ap-field" for="fontMonoInput">
+                <span>Code &amp; editor</span>
+                <select id="fontMonoInput"></select>
+              </label>
+            </div>
+
+            <button class="ap-reset" id="apReset" type="button">Reset to defaults</button>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -262,7 +340,7 @@ flowchart LR
   D --> E[Done]
 ```
 
-Diagrams are drawn with Mermaid and re-render when you switch between the light and dark themes.
+Diagrams are drawn with Mermaid and redraw themselves whenever you change the theme from the appearance button in the toolbar.
 
 ## Keyboard shortcuts
 
@@ -271,6 +349,7 @@ Diagrams are drawn with Mermaid and re-render when you switch between the light 
 | Ctrl / Cmd + O | Open a file |
 | Ctrl / Cmd + S | Export HTML |
 | Ctrl / Cmd + \\ | Toggle the outline |
+| Ctrl / Cmd + Shift + L | Switch light / dark |
 
 ## Export
 
